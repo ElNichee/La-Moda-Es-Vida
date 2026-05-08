@@ -18,15 +18,26 @@ import {
   FileText,
   Plus,
   Trash,
-  ShoppingBag
+  ShoppingBag,
+  Search
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import React, { useState, useEffect, useRef } from 'react';
 
 // --- Components ---
 
-const Navbar = () => {
+interface Order {
+  id: string;
+  radical: string;
+  date: string;
+  type: string;
+  city: string;
+  idNumber: string;
+}
+
+const Navbar = ({ orders }: { orders: Order[] }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isCartOpen, setIsCartOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
@@ -50,7 +61,8 @@ const Navbar = () => {
         <motion.div 
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="text-2xl md:text-3xl font-serif tracking-tighter uppercase"
+          className="text-2xl md:text-3xl font-serif tracking-tighter uppercase cursor-pointer"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         >
           <span className="font-light italic">La Moda</span> <span className="font-bold text-brand-gold">es Vida</span>
         </motion.div>
@@ -69,6 +81,67 @@ const Navbar = () => {
               {item.name}
             </motion.a>
           ))}
+          
+          {/* Cart Icon */}
+          <div className="relative">
+            <motion.button 
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setIsCartOpen(!isCartOpen)}
+              className="p-2 text-brand-gold hover:text-white transition-colors relative"
+            >
+              <ShoppingBag size={20} />
+              {orders.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-white text-brand-black text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-lg">
+                  {orders.length}
+                </span>
+              )}
+            </motion.button>
+            
+            <AnimatePresence>
+              {isCartOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                  className="absolute right-0 mt-4 w-72 bg-brand-surface border border-brand-border p-6 shadow-2xl backdrop-blur-xl"
+                >
+                  <h4 className="text-[10px] uppercase tracking-widest font-bold text-brand-gold mb-4 flex items-center justify-between">
+                    Mis Pedidos
+                    <X size={14} className="cursor-pointer text-brand-muted hover:text-white" onClick={() => setIsCartOpen(false)} />
+                  </h4>
+                  
+                  {orders.length === 0 ? (
+                    <p className="text-[10px] text-brand-muted italic uppercase text-center py-4">No hay pedidos registrados</p>
+                  ) : (
+                    <div className="space-y-4 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                      {orders.map((order) => (
+                        <div key={order.id} className="border-b border-white/5 pb-3">
+                          <div className="flex justify-between items-start mb-1">
+                            <span className="text-xs font-bold text-white leading-none">{order.radical}</span>
+                            <span className="text-[8px] text-brand-muted bg-white/5 px-2 py-0.5 rounded">{order.type}</span>
+                          </div>
+                          <div className="text-[9px] text-brand-muted flex justify-between">
+                            <span>{order.date}</span>
+                            <span>{order.city}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  
+                  {orders.length > 0 && (
+                    <div className="mt-6 pt-4 border-t border-white/10 text-center">
+                      <button className="text-[9px] uppercase tracking-widest font-bold text-brand-gold hover:text-white transition-colors">
+                        Ver todo el historial
+                      </button>
+                    </div>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
           <motion.button 
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
@@ -79,9 +152,21 @@ const Navbar = () => {
         </div>
 
         {/* Mobile Toggle */}
-        <button onClick={() => setIsOpen(!isOpen)} className="md:hidden text-white">
-          {isOpen ? <X size={28} /> : <Menu size={28} />}
-        </button>
+        <div className="flex items-center gap-4 md:hidden">
+          <div className="relative">
+            <button onClick={() => setIsCartOpen(!isCartOpen)} className="text-brand-gold relative">
+              <ShoppingBag size={24} />
+              {orders.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-white text-brand-black text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                  {orders.length}
+                </span>
+              )}
+            </button>
+          </div>
+          <button onClick={() => setIsOpen(!isOpen)} className="text-white">
+            {isOpen ? <X size={28} /> : <Menu size={28} />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Menu Overlay */}
@@ -108,6 +193,62 @@ const Navbar = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      
+      {/* Mobile Cart Overlay */}
+      <AnimatePresence>
+        {isCartOpen && (
+          <motion.div
+            initial={{ opacity: 0, x: '100%' }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: '100%' }}
+            className="fixed inset-0 z-50 bg-brand-black/95 backdrop-blur-xl md:hidden p-8 flex flex-col"
+          >
+            <div className="flex justify-between items-center mb-12">
+              <h3 className="text-2xl font-serif font-light italic text-brand-gold">Mis Pedidos</h3>
+              <button onClick={() => setIsCartOpen(false)} className="text-white p-2">
+                <X size={32} />
+              </button>
+            </div>
+            
+            <div className="flex-grow overflow-y-auto space-y-6">
+              {orders.length === 0 ? (
+                <div className="h-full flex flex-col items-center justify-center text-center">
+                  <ShoppingBag size={48} className="text-brand-muted mb-4 opacity-20" />
+                  <p className="text-brand-muted uppercase text-[10px] tracking-widest font-bold italic">No hay pedidos registrados aún</p>
+                </div>
+              ) : (
+                orders.map((order) => (
+                  <div key={order.id} className="bg-white/5 p-6 rounded-lg border border-brand-border/30">
+                    <div className="flex justify-between items-center mb-4">
+                      <span className="text-lg font-mono font-bold text-white">{order.radical}</span>
+                      <span className="text-[10px] uppercase font-bold text-brand-gold border border-brand-gold/30 px-3 py-1 rounded-full">{order.type}</span>
+                    </div>
+                    <div className="space-y-2">
+                       <p className="text-xs text-brand-muted uppercase tracking-widest flex justify-between">
+                         <span>Fecha:</span> <span className="text-white">{order.date}</span>
+                       </p>
+                       <p className="text-xs text-brand-muted uppercase tracking-widest flex justify-between">
+                         <span>Ciudad:</span> <span className="text-white">{order.city}</span>
+                       </p>
+                       <p className="text-xs text-brand-muted uppercase tracking-widest flex justify-between">
+                         <span>ID Cliente:</span> <span className="text-white">{order.idNumber}</span>
+                       </p>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            
+            {orders.length > 0 && (
+              <div className="mt-8">
+                <button className="w-full py-5 bg-brand-gold text-brand-black text-xs uppercase tracking-[0.4em] font-bold">
+                  Historial Completo
+                </button>
+              </div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 };
@@ -120,14 +261,81 @@ interface AttachedFile {
   type: string;
 }
 
-const OrderSection = () => {
+const OrderSection = ({ addOrder }: { addOrder: (order: Order) => void }) => {
   const [files, setFiles] = useState<AttachedFile[]>([]);
   const [dynamicFields, setDynamicFields] = useState([{ id: Date.now(), title: '', desc: '' }]);
   const [previewFile, setPreviewFile] = useState<AttachedFile | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [radical, setRadical] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCheckingRegistration, setIsCheckingRegistration] = useState(false);
+  const [registrationMsg, setRegistrationMsg] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [formData, setFormData] = useState({
+    idType: '',
+    idNumber: '',
+    city: '',
+    date: new Date().toISOString().split('T')[0],
+    orderType: ''
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // n8n Webhook Integration - Manual Check
+  const checkUser = async () => {
+    if (!formData.idType || formData.idNumber.length < 5) {
+      setRegistrationMsg({
+        type: 'error',
+        text: 'Por favor complete el Tipo de Identificación y asegúrese de que el número sea válido (mínimo 5 caracteres).'
+      });
+      return;
+    }
+
+    setIsCheckingRegistration(true);
+    try {
+      const response = await fetch('https://danielrodd.app.n8n.cloud/webhook/06ccdb4f-d4e5-4433-8a3b-f32823f32492', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          idType: formData.idType,
+          idNumber: formData.idNumber
+        })
+      });
+
+      if (!response.ok) throw new Error('Network response was not ok');
+      
+      const result = await response.json();
+      
+      // Assuming result structure: [ { exists: true, data: { ... } } ] or { exists: true, data: { ... } }
+      const data = Array.isArray(result) ? result[0] : result;
+
+      if (data && data.exists) {
+        setRegistrationMsg({
+          type: 'success',
+          text: 'Sus datos han sido encontrados en nuestro sistema global. La información ha sido cargada automáticamente.'
+        });
+        // Populate form if data exists
+        if (data.userData) {
+          setFormData(prev => ({
+            ...prev,
+            city: data.userData.city || prev.city,
+            orderType: data.userData.orderType || prev.orderType
+          }));
+        }
+      } else {
+        setRegistrationMsg({
+          type: 'error',
+          text: 'Sus datos no se encuentran registrados en nuestra base de datos global. Por favor, diligencie toda la información solicitada.'
+        });
+      }
+    } catch (error) {
+      console.error('Error checking registration:', error);
+      setRegistrationMsg({
+        type: 'error',
+        text: 'Ocurrió un error al conectar con el servidor de verificación. Por favor intente de nuevo o diligencie el formulario manualmente.'
+      });
+    } finally {
+      setIsCheckingRegistration(false);
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -189,6 +397,17 @@ const OrderSection = () => {
     // Simulate API call
     setTimeout(() => {
       const randomRadical = 'LM-' + Math.floor(100000 + Math.random() * 900000);
+      
+      const newOrder: Order = {
+        id: Math.random().toString(36).substr(2, 9),
+        radical: randomRadical,
+        date: formData.date,
+        type: formData.orderType || 'Retail Collection',
+        city: formData.city || 'Bogotá D.C.',
+        idNumber: formData.idNumber || 'Sin identificar'
+      };
+      
+      addOrder(newOrder);
       setRadical(randomRadical);
       setIsSubmitting(false);
     }, 1500);
@@ -237,7 +456,11 @@ const OrderSection = () => {
                 <form className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase tracking-widest text-brand-muted font-bold">Tipo de Identificación</label>
-                    <select className="w-full bg-brand-black/40 border border-brand-border p-4 text-white text-sm focus:border-brand-gold focus:outline-none transition-colors appearance-none cursor-pointer">
+                    <select 
+                      value={formData.idType}
+                      onChange={(e) => setFormData({...formData, idType: e.target.value})}
+                      className="w-full bg-brand-black/40 border border-brand-border p-4 text-white text-sm focus:border-brand-gold focus:outline-none transition-colors appearance-none cursor-pointer"
+                    >
                       <option value="">Seleccione...</option>
                       <option value="CC">Cédula de Ciudadanía</option>
                       <option value="NIT">NIT</option>
@@ -247,22 +470,58 @@ const OrderSection = () => {
 
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase tracking-widest text-brand-muted font-bold">Número de Identificación</label>
-                    <input type="text" placeholder="Ej: 1020304050" className="w-full bg-brand-black/40 border border-brand-border p-4 text-white text-sm focus:border-brand-gold focus:outline-none transition-colors placeholder:text-gray-700" />
+                    <div className="flex gap-2">
+                      <input 
+                        type="text" 
+                        value={formData.idNumber}
+                        onChange={(e) => setFormData({...formData, idNumber: e.target.value})}
+                        placeholder="Ej: 1020304050" 
+                        className="flex-grow bg-brand-black/40 border border-brand-border p-4 text-white text-sm focus:border-brand-gold focus:outline-none transition-colors placeholder:text-gray-700" 
+                      />
+                      <button 
+                        type="button"
+                        onClick={checkUser}
+                        disabled={isCheckingRegistration}
+                        className="px-6 bg-brand-gold text-brand-black text-[10px] uppercase tracking-widest font-bold hover:bg-white transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      >
+                        {isCheckingRegistration ? (
+                          <div className="w-3 h-3 border-2 border-brand-black border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <Search size={14} />
+                        )}
+                        Verificar
+                      </button>
+                    </div>
                   </div>
 
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase tracking-widest text-brand-muted font-bold">Ciudad</label>
-                    <input type="text" placeholder="Ej: Bogotá D.C." className="w-full bg-brand-black/40 border border-brand-border p-4 text-white text-sm focus:border-brand-gold focus:outline-none transition-colors placeholder:text-gray-700" />
+                    <input 
+                      type="text" 
+                      value={formData.city}
+                      onChange={(e) => setFormData({...formData, city: e.target.value})}
+                      placeholder="Ej: Bogotá D.C." 
+                      className="w-full bg-brand-black/40 border border-brand-border p-4 text-white text-sm focus:border-brand-gold focus:outline-none transition-colors placeholder:text-gray-700" 
+                    />
                   </div>
 
                   <div className="space-y-2">
                     <label className="text-[10px] uppercase tracking-widest text-brand-muted font-bold">Fecha de Solicitud</label>
-                    <input type="date" className="w-full bg-brand-black/40 border border-brand-border p-4 text-white text-sm focus:border-brand-gold focus:outline-none transition-colors [color-scheme:dark]" />
+                    <input 
+                      type="date" 
+                      value={formData.date}
+                      onChange={(e) => setFormData({...formData, date: e.target.value})}
+                      className="w-full bg-brand-black/40 border border-brand-border p-4 text-white text-sm focus:border-brand-gold focus:outline-none transition-colors [color-scheme:dark]" 
+                    />
                   </div>
 
                   <div className="space-y-2 md:col-span-2">
                     <label className="text-[10px] uppercase tracking-widest text-brand-muted font-bold">Tipo de Pedido</label>
-                    <select className="w-full bg-brand-black/40 border border-brand-border p-4 text-white text-sm focus:border-brand-gold focus:outline-none transition-colors appearance-none cursor-pointer">
+                    <select 
+                      value={formData.orderType}
+                      onChange={(e) => setFormData({...formData, orderType: e.target.value})}
+                      className="w-full bg-brand-black/40 border border-brand-border p-4 text-white text-sm focus:border-brand-gold focus:outline-none transition-colors appearance-none cursor-pointer"
+                    >
                       <option value="">Seleccione el tipo...</option>
                       <option value="retail">Retail Collection</option>
                       <option value="showroom">Showroom Exclusive</option>
@@ -501,16 +760,68 @@ const OrderSection = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* REGISTRATION POPUP */}
+      <AnimatePresence>
+        {registrationMsg && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className={`max-w-md w-full bento-card p-8 border-t-4 ${registrationMsg.type === 'success' ? 'border-brand-gold' : 'border-red-500'} relative`}
+            >
+              <button 
+                onClick={() => setRegistrationMsg(null)}
+                className="absolute top-4 right-4 text-brand-muted hover:text-white transition-colors"
+              >
+                <X size={18} />
+              </button>
+              
+              <div className="flex flex-col items-center text-center">
+                {registrationMsg.type === 'success' ? (
+                  <Database className="text-brand-gold mb-4" size={40} />
+                ) : (
+                  <FileText className="text-red-500 mb-4" size={40} />
+                )}
+                
+                <h3 className={`text-xl font-serif font-bold italic mb-4 ${registrationMsg.type === 'success' ? 'text-brand-gold' : 'text-white'}`}>
+                  {registrationMsg.type === 'success' ? 'Datos Registrados' : 'Usuario No Registrado'}
+                </h3>
+                
+                <p className="text-xs text-brand-muted leading-relaxed font-medium mb-8 uppercase tracking-widest">
+                  {registrationMsg.text}
+                </p>
+                
+                <button
+                  onClick={() => setRegistrationMsg(null)}
+                  className={`w-full py-4 text-[10px] uppercase tracking-widest font-bold transition-all ${
+                    registrationMsg.type === 'success' 
+                    ? 'bg-brand-gold text-brand-black hover:shadow-lg' 
+                    : 'border border-brand-border text-white hover:bg-white/5'
+                  }`}
+                >
+                  Continuar
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </section>
   );
 };
 
-// --- Main App ---
-
 export default function App() {
+  const [orders, setOrders] = useState<Order[]>([]);
+
+  const addOrder = (order: Order) => {
+    setOrders(prev => [order, ...prev]);
+  };
+
   return (
     <div className="min-h-screen selection:bg-brand-gold selection:text-brand-black bg-brand-black" id="inicio">
-      <Navbar />
+      <Navbar orders={orders} />
 
       <main className="max-w-7xl mx-auto px-6 py-32 grid grid-cols-1 md:grid-cols-4 gap-6">
         
@@ -523,7 +834,6 @@ export default function App() {
               referrerPolicy="no-referrer"
               className="w-full h-full object-cover brightness-50 contrast-125 opacity-40 group-hover:scale-105 transition-transform duration-1000"
             />
-            {/* Design HTML's recursive lines pattern simulated via overlay */}
             <div className="absolute inset-0 opacity-10 pointer-events-none bg-[repeating-linear-gradient(45deg,#111,#111_10px,#161616_10px,#161616_20px)]" />
           </div>
           
@@ -659,8 +969,7 @@ export default function App() {
 
       </main>
 
-      {/* NEW ORDER SECTION */}
-      <OrderSection />
+      <OrderSection addOrder={addOrder} />
 
       <footer className="py-12 border-t border-brand-border relative overflow-hidden" id="contacto">
         <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-2 items-center gap-8">
